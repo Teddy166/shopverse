@@ -30,7 +30,8 @@ class _EditProfilePageState extends State<Editprofilepage> {
 
   Future<void> fetchUserData() async {
     final uid = FirebaseAuth.instance.currentUser!.uid;
-    final snapshot = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final snapshot =
+    await FirebaseFirestore.instance.collection('users').doc(uid).get();
 
     if (snapshot.exists) {
       final data = snapshot.data()!;
@@ -54,10 +55,10 @@ class _EditProfilePageState extends State<Editprofilepage> {
         return;
       }
     } else {
-      var status = await Permission.storage.request();
+      var status = await Permission.photos.request();
       if (!status.isGranted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Storage permission denied")),
+          const SnackBar(content: Text("Gallery permission denied")),
         );
         return;
       }
@@ -69,13 +70,14 @@ class _EditProfilePageState extends State<Editprofilepage> {
     );
 
     if (pickedFile != null) {
-      setState(() => selectedImageFile = File(pickedFile.path));
+      setState(() => selectedImageFile = File(pickedFile.path)); // 👈 Update preview immediately
     }
   }
 
   Future<String?> uploadImage(File file) async {
     final uid = FirebaseAuth.instance.currentUser!.uid;
-    final ref = FirebaseStorage.instance.ref().child('profile_images/$uid.jpg');
+    final ref =
+    FirebaseStorage.instance.ref().child('profile_images/$uid.jpg');
     await ref.putFile(file);
     return await ref.getDownloadURL();
   }
@@ -97,6 +99,8 @@ class _EditProfilePageState extends State<Editprofilepage> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Profile updated successfully!')),
     );
+
+    Navigator.pop(context); // 👈 Go back to ProfilePage
   }
 
   @override
@@ -115,7 +119,10 @@ class _EditProfilePageState extends State<Editprofilepage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Edit Profile")),
+      appBar: AppBar(
+        title: const Text("Edit Profile"),
+        backgroundColor: Colors.purple,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -159,6 +166,7 @@ class _EditProfilePageState extends State<Editprofilepage> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: saveChanges,
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
               child: const Text("Save Changes"),
             ),
           ],
