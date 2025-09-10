@@ -1,6 +1,7 @@
  import 'package:circular_bottom_navigation/circular_bottom_navigation.dart';
 import 'package:circular_bottom_navigation/tab_item.dart';
 import 'package:flutter/material.dart';
+import 'package:test_project/pages/dashpage.dart';
 import 'package:test_project/pages/home_page.dart';
 import 'package:test_project/pages/login_page.dart';
 import 'package:test_project/pages/profile_page.dart';
@@ -21,6 +22,7 @@ import 'package:test_project/pages/settings.dart';
      TabItem(Icons.home, "Home", Colors.purple),
      TabItem(Icons.person, "Profile", Colors.purple),
      TabItem(Icons.settings, "Settings", Colors.purple),
+     TabItem(Icons.dashboard, "Dashboard", Colors.purple),
 
    ];
 
@@ -31,6 +33,7 @@ import 'package:test_project/pages/settings.dart';
      HomePage(),
      ProfilePage(),
      Settings(),
+     DashboardPage(),
    ];
 
    @override

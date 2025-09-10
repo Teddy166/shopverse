@@ -31,6 +31,7 @@ class DashboardPage extends StatelessWidget {
               // Navigate to Orders Page
             }),
             _dashboardCard("Profile", Icons.person, () {
+
               // Navigate to Profile Page
             }),
           ],
@@ -49,7 +50,7 @@ class DashboardPage extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 40, color: Colors.blue),
+              Icon(icon, size: 40, color: Colors.purple),
               const SizedBox(height: 8),
               Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ],

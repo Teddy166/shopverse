@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class UploadProductPage extends StatefulWidget {
   const UploadProductPage({super.key});
@@ -17,6 +19,8 @@ class _UploadProductPageState extends State<UploadProductPage> {
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
+  bool _isUploading = false;
+
   Future<void> _pickImage() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
 
@@ -27,12 +31,41 @@ class _UploadProductPageState extends State<UploadProductPage> {
     }
   }
 
-  void _uploadProduct() {
-    if (_formKey.currentState!.validate()) {
-      // TODO: Save to Firebase or your backend
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Product uploaded successfully!")),
-      );
+  Future<void> _uploadProduct() async {
+    if (_formKey.currentState!.validate() && _imageFile != null) {
+      setState(() => _isUploading = true);
+
+      try {
+        // Upload image to Firebase Storage
+        String fileName = DateTime.now().millisecondsSinceEpoch.toString();
+        UploadTask uploadTask = FirebaseStorage.instance
+            .ref("products/$fileName.jpg")
+            .putFile(_imageFile!);
+
+        TaskSnapshot snapshot = await uploadTask;
+        String imageUrl = await snapshot.ref.getDownloadURL();
+
+        // Save product data to Firestore
+        await FirebaseFirestore.instance.collection("products").add({
+          "name": _nameController.text,
+          "price": _priceController.text,
+          "description": _descriptionController.text,
+          "imageUrl": imageUrl,
+          "createdAt": FieldValue.serverTimestamp(),
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Product uploaded successfully!")),
+        );
+
+        Navigator.pop(context); // Go back to dashboard/home
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e")),
+        );
+      }
+
+      setState(() => _isUploading = false);
     }
   }
 
@@ -63,7 +96,8 @@ class _UploadProductPageState extends State<UploadProductPage> {
                 )
                     : ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Image.file(_imageFile!, height: 150, width: double.infinity, fit: BoxFit.cover),
+                  child: Image.file(_imageFile!,
+                      height: 150, width: double.infinity, fit: BoxFit.cover),
                 ),
               ),
               const SizedBox(height: 20),
@@ -86,7 +120,9 @@ class _UploadProductPageState extends State<UploadProductPage> {
                 decoration: const InputDecoration(labelText: "Description"),
               ),
               const SizedBox(height: 20),
-              ElevatedButton.icon(
+              _isUploading
+                  ? const CircularProgressIndicator()
+                  : ElevatedButton.icon(
                 onPressed: _uploadProduct,
                 icon: const Icon(Icons.cloud_upload),
                 label: const Text("Upload"),
