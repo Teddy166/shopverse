@@ -6,14 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-class Editprofilepage extends StatefulWidget {
-  const Editprofilepage({super.key});
+class EditProfilePage extends StatefulWidget {
+  const EditProfilePage({super.key});
 
   @override
-  State<Editprofilepage> createState() => _EditProfilePageState();
+  State<EditProfilePage> createState() => _EditProfilePageState();
 }
 
-class _EditProfilePageState extends State<Editprofilepage> {
+class _EditProfilePageState extends State<EditProfilePage> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
   final TextEditingController aboutController = TextEditingController();
@@ -55,10 +55,10 @@ class _EditProfilePageState extends State<Editprofilepage> {
         return;
       }
     } else {
-      var status = await Permission.photos.request();
+      var status = await Permission.storage.request();
       if (!status.isGranted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Gallery permission denied")),
+          const SnackBar(content: Text("Storage permission denied")),
         );
         return;
       }
@@ -70,14 +70,13 @@ class _EditProfilePageState extends State<Editprofilepage> {
     );
 
     if (pickedFile != null) {
-      setState(() => selectedImageFile = File(pickedFile.path)); // 👈 Update preview immediately
+      setState(() => selectedImageFile = File(pickedFile.path));
     }
   }
 
   Future<String?> uploadImage(File file) async {
     final uid = FirebaseAuth.instance.currentUser!.uid;
-    final ref =
-    FirebaseStorage.instance.ref().child('profile_images/$uid.jpg');
+    final ref = FirebaseStorage.instance.ref().child('profile_images/$uid.jpg');
     await ref.putFile(file);
     return await ref.getDownloadURL();
   }
@@ -99,14 +98,13 @@ class _EditProfilePageState extends State<Editprofilepage> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Profile updated successfully!')),
     );
-
-    Navigator.pop(context); // 👈 Go back to ProfilePage
   }
 
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+          body: Center(child: CircularProgressIndicator()));
     }
 
     ImageProvider profileImage;
@@ -119,10 +117,7 @@ class _EditProfilePageState extends State<Editprofilepage> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Edit Profile"),
-        backgroundColor: Colors.purple,
-      ),
+      appBar: AppBar(title: const Text("Edit Profile")),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -166,7 +161,6 @@ class _EditProfilePageState extends State<Editprofilepage> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: saveChanges,
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
               child: const Text("Save Changes"),
             ),
           ],

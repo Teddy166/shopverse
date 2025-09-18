@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import '../main.dart';
-import 'home_page.dart'; // to use Product class
 
 class ProductDetailsPage extends StatelessWidget {
-  final Product product;
+  final Map<String, dynamic> product;
 
   const ProductDetailsPage({super.key, required this.product});
 
@@ -11,58 +9,55 @@ class ProductDetailsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(product.name, style: const TextStyle(color: Colors.white)),
+        title: Text(product["name"] ?? "Product Details"),
         backgroundColor: Colors.purple,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: ListView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Product Image
             ClipRRect(
               borderRadius: BorderRadius.circular(15),
               child: Image.network(
-                product.imageUrl,
+                product["imageUrl"] ?? "",
                 height: 250,
+                width: double.infinity,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  height: 250,
-                  color: Colors.grey[200],
-                  child: const Icon(Icons.broken_image, size: 100),
-                ),
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    height: 250,
+                    color: Colors.grey[200],
+                    child: const Icon(Icons.broken_image, size: 80, color: Colors.grey),
+                  );
+                },
               ),
             ),
             const SizedBox(height: 20),
-            Text(product.name,
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+
+            // Product Name
+            Text(
+              product["name"] ?? "",
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 10),
-            Text("\$${product.price.toStringAsFixed(2)}",
-                style: const TextStyle(fontSize: 20, color: Colors.purple)),
-            const SizedBox(height: 10),
-            Text(product.description, style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 20),
-            const Text("Seller: Shopverse Mall",
-                style: TextStyle(fontSize: 16, color: Colors.black87)),
-            const SizedBox(height: 30),
-            ElevatedButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Order placed successfully!")),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.purple,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+
+            // Price
+            Text(
+              "₦${product["price"] ?? "0"}",
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.purple,
               ),
-              child: const Text("Order Now", style: TextStyle(fontSize: 18)),
+            ),
+            const SizedBox(height: 20),
+
+            // Description
+            Text(
+              product["description"] ?? "",
+              style: const TextStyle(fontSize: 16, color: Colors.black87),
             ),
           ],
         ),
