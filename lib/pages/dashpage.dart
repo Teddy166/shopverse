@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:test_project/pages/profile_page.dart';
 import 'upload_product_page.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -9,7 +10,7 @@ class DashboardPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Dashboard"),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.purple,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -31,7 +32,9 @@ class DashboardPage extends StatelessWidget {
               // Navigate to Orders Page
             }),
             _dashboardCard("Profile", Icons.person, () {
-
+              Navigator.push
+              (context,
+                  MaterialPageRoute(builder: (context) => ProfilePage()));
               // Navigate to Profile Page
             }),
           ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:test_project/pages/productdetailspage.dart';
+import 'package:test_project/pages/profile_page.dart';
 import '../category_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -41,23 +42,24 @@ class _HomePageState extends State<HomePage> {
         actions: [
           IconButton(
             onPressed: () {
-              // TODO: Go to Cart Page
+
             },
             icon: const Icon(Icons.shopping_cart, color: Colors.white),
           ),
           IconButton(
             onPressed: () {
-              // TODO: Go to Profile Page
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProfilePage()));
             },
             icon: const Icon(Icons.person, color: Colors.white),
           ),
         ],
       ),
+      backgroundColor: Colors.purple.shade300,
       body: Stack(
         children: [
-          Positioned.fill(
-            child: Image.asset('assets/images/shopverse2.jpg', fit: BoxFit.cover),
-          ),
+
           SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,10 +87,12 @@ class _HomePageState extends State<HomePage> {
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(15),
-                    child: Image.asset(
-                      "assets/images/promo_banner.jpg",
-                      height: 150,
-                      fit: BoxFit.cover,
+                    child: Center(
+                      child: Image.asset(
+                        "assets/images/shopv.png",
+                        height: 150,width: 200,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                 ),

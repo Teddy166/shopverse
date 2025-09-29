@@ -1,8 +1,8 @@
 import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 class UploadProductPage extends StatefulWidget {
   const UploadProductPage({super.key});
@@ -12,60 +12,81 @@ class UploadProductPage extends StatefulWidget {
 }
 
 class _UploadProductPageState extends State<UploadProductPage> {
-  final _formKey = GlobalKey<FormState>();
-  File? _imageFile;
-
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _descController = TextEditingController();
 
-  bool _isUploading = false;
+  File? _selectedImage;
+  bool _isLoading = false;
 
   Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    final pickedFile =
+    await ImagePicker().pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
       setState(() {
-        _imageFile = File(pickedFile.path);
+        _selectedImage = File(pickedFile.path);
       });
     }
   }
 
+  Future<String> _uploadImage(File imageFile) async {
+    try {
+      String fileName = DateTime.now().millisecondsSinceEpoch.toString();
+      Reference ref =
+      FirebaseStorage.instance.ref().child("products").child(fileName);
+
+      UploadTask uploadTask = ref.putFile(imageFile);
+      TaskSnapshot snapshot = await uploadTask;
+
+      String downloadUrl = await snapshot.ref.getDownloadURL();
+      return downloadUrl;
+    } catch (e) {
+      throw Exception("Image upload failed: $e");
+    }
+  }
+
   Future<void> _uploadProduct() async {
-    if (_formKey.currentState!.validate() && _imageFile != null) {
-      setState(() => _isUploading = true);
+    if (_nameController.text.isEmpty ||
+        _priceController.text.isEmpty ||
+        _descController.text.isEmpty ||
+        _selectedImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please fill all fields and select an image")),
+      );
+      return;
+    }
 
-      try {
-        // Upload image to Firebase Storage
-        String fileName = DateTime.now().millisecondsSinceEpoch.toString();
-        UploadTask uploadTask = FirebaseStorage.instance
-            .ref("products/$fileName.jpg")
-            .putFile(_imageFile!);
+    setState(() {
+      _isLoading = true;
+    });
 
-        TaskSnapshot snapshot = await uploadTask;
-        String imageUrl = await snapshot.ref.getDownloadURL();
+    try {
+      // 1. Upload image and get URL
+      String imageUrl = await _uploadImage(_selectedImage!);
 
-        // Save product data to Firestore
-        await FirebaseFirestore.instance.collection("products").add({
-          "name": _nameController.text,
-          "price": _priceController.text,
-          "description": _descriptionController.text,
-          "imageUrl": imageUrl,
-          "createdAt": FieldValue.serverTimestamp(),
-        });
+      // 2. Save product to Firestore
+      await FirebaseFirestore.instance.collection("products").add({
+        "name": _nameController.text,
+        "price": double.tryParse(_priceController.text) ?? 0,
+        "description": _descController.text,
+        "imageUrl": imageUrl, // 👈 save download URL
+        "createdAt": FieldValue.serverTimestamp(),
+      });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Product uploaded successfully!")),
-        );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Product uploaded successfully!")),
+      );
 
-        Navigator.pop(context); // Go back to dashboard/home
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e")),
-        );
-      }
-
-      setState(() => _isUploading = false);
+      Navigator.pop(context); // Go back to home after upload
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error uploading product: $e")),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -74,65 +95,60 @@ class _UploadProductPageState extends State<UploadProductPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Upload Product"),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.purple,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              GestureDetector(
-                onTap: _pickImage,
-                child: _imageFile == null
-                    ? Container(
-                  height: 150,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
-                )
-                    : ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.file(_imageFile!,
-                      height: 150, width: double.infinity, fit: BoxFit.cover),
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: "Product Name"),
-                validator: (value) => value!.isEmpty ? "Enter product name" : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _priceController,
-                decoration: const InputDecoration(labelText: "Price"),
-                keyboardType: TextInputType.number,
-                validator: (value) => value!.isEmpty ? "Enter product price" : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _descriptionController,
-                maxLines: 3,
-                decoration: const InputDecoration(labelText: "Description"),
-              ),
-              const SizedBox(height: 20),
-              _isUploading
-                  ? const CircularProgressIndicator()
-                  : ElevatedButton.icon(
-                onPressed: _uploadProduct,
-                icon: const Icon(Icons.cloud_upload),
-                label: const Text("Upload"),
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 50),
-                  backgroundColor: Colors.blue,
-                ),
+        child: Column(
+          children: [
+            // Image Picker
+            GestureDetector(
+              onTap: _pickImage,
+              child: _selectedImage == null
+                  ? Container(
+                height: 150,
+                width: double.infinity,
+                color: Colors.grey[300],
+                child: const Icon(Icons.add_a_photo, size: 50),
               )
-            ],
-          ),
+                  : Image.file(_selectedImage!, height: 150, fit: BoxFit.cover),
+            ),
+            const SizedBox(height: 20),
+
+            // Name
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(labelText: "Product Name"),
+            ),
+            const SizedBox(height: 10),
+
+            // Price
+            TextField(
+              controller: _priceController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: "Price"),
+            ),
+            const SizedBox(height: 10),
+
+            // Description
+            TextField(
+              controller: _descController,
+              maxLines: 3,
+              decoration: const InputDecoration(labelText: "Description"),
+            ),
+            const SizedBox(height: 20),
+
+            // Upload Button
+            _isLoading
+                ? const CircularProgressIndicator()
+                : ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.purple,
+                  foregroundColor: Colors.white),
+              onPressed: _uploadProduct,
+              child: const Text("Upload Product"),
+            ),
+          ],
         ),
       ),
     );
